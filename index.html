@@ -375,20 +375,20 @@
       console.log('Peer assessment saved:', data);
 
       // Send to Google Apps Script (for Google Sheets)
-      if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "https://script.google.com/macros/s/AKfycbwyr7rRJ9t2ny5xyO2OqTZsDViiD-vZqTWjBFH4fYOulg5o0WMYPB2_GnHGVh38QT_9ig/exec") {
-        try {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors', // we don't need to read the response, just send
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          });
-        } catch (e) {
-          console.error('Error sending to Google Script:', e);
-        }
+            // Send to Google Apps Script (for Google Sheets)
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors', // we don't need to read the response, just send
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+      } catch (e) {
+        console.error('Error sending to Google Script:', e);
       }
+
 
       statusMessage.textContent = 'Assessment saved!';
       statusMessage.className = 'status-message status-success';
@@ -403,122 +403,8 @@
 
     saveBtn.addEventListener('click', saveAssessment);
   </script>
-    <!-- PE Motor Skills Assessment Form -->
-  <div style="border:1px solid #ccc; padding:10px; margin-top:20px;">
-    <h2>Record Motor Skills Assessment</h2>
-
-    <label>
-      Class:
-      <input type="text" id="className" placeholder="e.g. 1 Responsibility">
-    </label>
-    <br><br>
-
-    <label>
-      Student being assessed:
-      <input type="text" id="studentName" placeholder="e.g. John Tan">
-    </label>
-    <br><br>
-
-    <label>
-      Assessing partner:
-      <input type="text" id="assessorName" placeholder="e.g. Ali Lim">
-    </label>
-    <br><br>
-
-    <label>
-      Skill type:
-      <select id="skillType">
-        <option value="Roll">Roll</option>
-        <option value="Catch">Catch</option>
-        <option value="Throw">Throw</option>
-      </select>
-    </label>
-    <br><br>
-
-    <label>
-      Object size:
-      <select id="objectSize">
-        <option value="Small">Small</option>
-        <option value="Medium">Medium</option>
-        <option value="Large">Large</option>
-      </select>
-    </label>
-    <br><br>
-
-    <label>
-      Number of successful hits:
-      <input type="number" id="successes" min="0">
-    </label>
-    <br><br>
-
-    <label>
-      Total number of attempts:
-      <input type="number" id="attempts" min="1">
-    </label>
-    <br><br>
-
-    <button type="button" onclick="submitAssessment()">Submit assessment</button>
-
-    <p id="status" style="font-weight:bold; margin-top:10px;"></p>
-  </div>
-  <script>
-    // 1. Put your Web App URL from Google Apps Script here:
-    const SHEET_WRITE_URL = "https://script.google.com/macros/s/AKfycbwyr7rRJ9t2ny5xyO2OqTZsDViiD-vZqTWjBFH4fYOulg5o0WMYPB2_GnHGVh38QT_9ig/exec";
-
-    async function submitAssessment() {
-      const statusEl = document.getElementById("status");
-      statusEl.textContent = "Submitting...";
-
-      // 2. Collect values from the form
-      const data = {
-        timestamp: new Date().toISOString(),  // current date/time
-        className: document.getElementById("className").value.trim(),
-        studentName: document.getElementById("studentName").value.trim(),
-        assessorName: document.getElementById("assessorName").value.trim(),
-        skillType: document.getElementById("skillType").value,
-        objectSize: document.getElementById("objectSize").value,
-        successes: document.getElementById("successes").value,
-        attempts: document.getElementById("attempts").value
-      };
-
-      // Basic validation (you can expand this later)
-      if (!data.className || !data.studentName || !data.assessorName) {
-        statusEl.textContent = "Please fill in class, student, and assessor.";
-        return;
-      }
-
-      try {
-        // 3. Send data to Google Script
-        const response = await fetch(SHEET_WRITE_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const result = await response.json();
-
-        if (result.status === "success") {
-          statusEl.textContent = "Assessment saved to Google Sheet ✅";
-
-          // Optional: clear some inputs for next assessment
-          document.getElementById("successes").value = "";
-          document.getElementById("attempts").value = "";
-        } else {
-          statusEl.textContent = "Error: Server did not return success.";
-        }
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Error: Could not connect to the server.";
-      }
-    }
-  </script>
 
 </body>
 </html>
+
 
