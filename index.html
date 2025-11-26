@@ -226,4 +226,181 @@
       <h2 style="font-size:1.05rem;margin-top:0;">Saved Records (this session)</h2>
       <div style="overflow-x:auto;">
         <table id="recordsTable">
-          <the
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Class</th>
+              <th>Student</th>
+              <th>Assessor</th>
+              <th>Skill</th>
+              <th>Object</th>
+              <th>Successes</th>
+              <th>Attempts</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- rows added here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----- DOM REFERENCES -----
+    const classSelect = document.getElementById('classSelect');
+    const studentNameInput = document.getElementById('studentNameInput');
+    const assessorNameInput = document.getElementById('assessorNameInput');
+    const skillSelect = document.getElementById('skillSelect');
+    const objectSelect = document.getElementById('objectSelect');
+    const attemptsInput = document.getElementById('attemptsInput');
+
+    const successBtn = document.getElementById('successBtn');
+    const failBtn = document.getElementById('failBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const attemptsInfo = document.getElementById('attemptsInfo');
+    const statusMessage = document.getElementById('statusMessage');
+    const recordsTableBody = document.querySelector('#recordsTable tbody');
+
+    // ----- STATE -----
+    let successes = 0;
+    let attemptsRecorded = 0;
+
+    function updateAttemptsInfo() {
+      const planned = Number(attemptsInput.value) || 0;
+      attemptsInfo.textContent =
+        `Successes: ${successes} | Attempts recorded: ${attemptsRecorded}` +
+        (planned ? ` / Planned: ${planned}` : '');
+    }
+
+    function resetCounters() {
+      successes = 0;
+      attemptsRecorded = 0;
+      successBtn.disabled = false;
+      failBtn.disabled = false;
+      updateAttemptsInfo();
+    }
+
+    attemptsInput.addEventListener('input', () => {
+      resetCounters();
+      statusMessage.textContent = '';
+      statusMessage.className = 'status-message';
+    });
+
+    function handleAttempt(isSuccess) {
+      const planned = Number(attemptsInput.value);
+      if (!planned || planned <= 0) {
+        statusMessage.textContent = 'Please key in the number of tries first.';
+        statusMessage.className = 'status-message status-error';
+        return;
+      }
+
+      if (attemptsRecorded >= planned) {
+        statusMessage.textContent = 'All tries have been recorded.';
+        statusMessage.className = 'status-message status-error';
+        successBtn.disabled = true;
+        failBtn.disabled = true;
+        return;
+      }
+
+      attemptsRecorded += 1;
+      if (isSuccess) {
+        successes += 1;
+      }
+
+      updateAttemptsInfo();
+
+      if (attemptsRecorded >= planned) {
+        successBtn.disabled = true;
+        failBtn.disabled = true;
+        statusMessage.textContent = 'All tries recorded. You can save now.';
+        statusMessage.className = 'status-message status-success';
+      }
+    }
+
+    successBtn.addEventListener('click', () => handleAttempt(true));
+    failBtn.addEventListener('click', () => handleAttempt(false));
+
+    function validateForm() {
+      if (!classSelect.value) return 'Please choose a class.';
+      if (!studentNameInput.value.trim()) return 'Please fill in the student name.';
+      if (!assessorNameInput.value.trim()) return 'Please fill in the assessor name.';
+      if (!skillSelect.value) return 'Please choose a skill.';
+      if (!objectSelect.value) return 'Please choose an object size.';
+      const planned = Number(attemptsInput.value);
+      if (!planned || planned <= 0) return 'Please key in the number of tries.';
+      if (attemptsRecorded !== planned) {
+        return `You planned ${planned} tries but recorded ${attemptsRecorded}. Please finish recording all tries before saving.`;
+      }
+      return '';
+    }
+
+    // 🔴 IMPORTANT: This is the ONLY LINE you need to change if your Apps Script URL changes
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwyr7rRJ9t2ny5xyO2OqTZsDViiD-vZqTWjBFH4fYOulg5o0WMYPB2_GnHGVh38QT_9ig/exec";
+
+    async function saveAssessment() {
+      const error = validateForm();
+      if (error) {
+        statusMessage.textContent = error;
+        statusMessage.className = 'status-message status-error';
+        return;
+      }
+
+      const timestamp = new Date().toISOString();
+
+      const data = {
+        timestamp: timestamp,
+        class: classSelect.value,
+        studentName: studentNameInput.value.trim(),
+        assessorName: assessorNameInput.value.trim(),
+        skillType: skillSelect.value,
+        objectSize: objectSelect.value,
+        successes: successes,
+        attempts: Number(attemptsInput.value)
+      };
+
+      // Add to table on page (session only)
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${data.timestamp}</td>
+        <td>${data.class}</td>
+        <td>${data.studentName}</td>
+        <td>${data.assessorName}</td>
+        <td>${data.skillType}</td>
+        <td>${data.objectSize}</td>
+        <td>${data.successes}</td>
+        <td>${data.attempts}</td>
+      `;
+      recordsTableBody.prepend(row);
+
+      console.log('Peer assessment saved (local & sending to Sheet):', data);
+
+      // Send to Google Apps Script (for Google Sheets)
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors', // we don't need to read the response, just send
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+      } catch (e) {
+        console.error('Error sending to Google Script:', e);
+      }
+
+      statusMessage.textContent = 'Assessment saved!';
+      statusMessage.className = 'status-message status-success';
+
+      // Prepare for next student: keep class + assessor, reset others
+      studentNameInput.value = '';
+      skillSelect.value = '';
+      objectSelect.value = '';
+      attemptsInput.value = '';
+      resetCounters();
+    }
+
+    saveBtn.addEventListener('click', saveAssessment);
+  </script>
+</body>
+</html>
