@@ -336,7 +336,7 @@
     }
 
     // 🔴 IMPORTANT: This is the ONLY LINE you need to change if your Apps Script URL changes
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqLJeCP4VxMJS9URv6MBOLeyLYdWAbi7y-45JYetEwO0fVeVG6n06K55sYJy0cuw-DpA/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLptxVhmH3dSUEqatr-UjMunIjoW8k3e4h1xd-F8DXbG5qCWbw0AYyqzUu9JdEmjVf2g/exec";
 
     async function saveAssessment() {
       const error = validateForm();
@@ -375,19 +375,26 @@
 
       console.log('Peer assessment saved (local & sending to Sheet):', data);
 
-      // Send to Google Apps Script (for Google Sheets)
-      try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors', // we don't need to read the response, just send
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-        });
-      } catch (e) {
-        console.error('Error sending to Google Script:', e);
-      }
+// Send to Google Apps Script (for Google Sheets) via GET (no CORS issues)
+try {
+  const params = new URLSearchParams({
+    timestamp: data.timestamp,
+    class: data.class,
+    studentName: data.studentName,
+    assessorName: data.assessorName,
+    skillType: data.skillType,
+    objectSize: data.objectSize,
+    successes: String(data.successes),
+    attempts: String(data.attempts)
+  });
+
+  // Fire-and-forget request using an image (no CORS blocking)
+  const img = new Image();
+  img.src = `${GOOGLE_SCRIPT_URL}?${params.toString()}`;
+} catch (e) {
+  console.error('Error building GET request for Google Script:', e);
+}
+
 
       statusMessage.textContent = 'Assessment saved!';
       statusMessage.className = 'status-message status-success';
@@ -404,4 +411,5 @@
   </script>
 </body>
 </html>
+
 
