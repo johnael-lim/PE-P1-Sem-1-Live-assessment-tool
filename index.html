@@ -375,7 +375,7 @@
       console.log('Peer assessment saved:', data);
 
       // Send to Google Apps Script (for Google Sheets)
-      if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "PASTE_YOUR_WEB_APP_URL_HERE") {
+      if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "https://script.google.com/a/macros/moe.edu.sg/s/AKfycbx07HdD5uRwk9_kGADg3uNhTIzJkf1r7Ny4wgWTO79Etp2XOcE8w64X61zpVhfE3x3aJA/exec") {
         try {
           await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
@@ -405,4 +405,5 @@
   </script>
 </body>
 </html>
+
 
